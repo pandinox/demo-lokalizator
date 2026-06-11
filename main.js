@@ -1,7 +1,8 @@
 /* main.js */
 
 // URL do JSONP-enabled Web App (Apps Script)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVTxpbFwaQeX8rFMBrXU_jSIqDA8t6JTjbER2HHKLhOjp9dFoUe6J-LlOAz4p40-iH/exec';
+// WAŻNE: wklej tutaj link do wdrożenia zakończony na /exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmY3TWK6qXYxEfInU877uuyNIuvm3a9b-u4o6r4WsGgru5F0AhdalXV-a59EXavvd8/exec';
 
 // JSONP helper
 function jsonpCall(params) {
@@ -14,7 +15,7 @@ function jsonpCall(params) {
       resolve(data);
     };
     const url = new URL(SCRIPT_URL);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v ?? ''));
     url.searchParams.set('callback', cb);
     const s = document.createElement('script');
     s.src = url;
@@ -38,9 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastHistory    = [];
   let lastLocation   = '';
   let currentMode    = 'home'; // 'check' lub 'change'
+  let html5QrCode    = null;
+  let scannerTarget  = null;
 
   // --- ELEMENTY DOM ---
-  const modeLabel            = document.getElementById('modeLabel');
+  const modeLabel = document.getElementById('modeLabel');
   function updateMode(name) {
     if (modeLabel) modeLabel.textContent = 'Tryb: ' + name;
   }
@@ -55,17 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputToken1         = document.getElementById('inputToken1');
   const inputToken2         = document.getElementById('inputToken2');
   const btnSaveSettings     = document.getElementById('btnSaveSettings');
-  const ADMIN_PASS          = 'TwojeSilneHaslo'; //tu tworzymy hasło do ustawień aplikacji
+  const ADMIN_PASS          = 'TwojeSilneHaslo'; // tu tworzymy hasło do ustawień aplikacji
 
   // Wybór użytkownika
-  const btnSelectUser  = document.getElementById('btnSelectUser');
-  const btnBackFromUser= document.getElementById('btnBackFromUser');
-  const listUsers      = document.getElementById('listUsers');
-  const labelUser      = document.getElementById('labelUser');
+  const btnSelectUser   = document.getElementById('btnSelectUser');
+  const btnBackFromUser = document.getElementById('btnBackFromUser');
+  const listUsers       = document.getElementById('listUsers');
+  const labelUser       = document.getElementById('labelUser');
 
   // Dashboard
   const btnCheckLocation  = document.getElementById('btnCheckLocation');
   const btnChangeLocation = document.getElementById('btnChangeLocation');
+  const btnAddProduct     = document.getElementById('btnAddProduct');
   const btnSwitchUser     = document.getElementById('btnSwitchUser');
 
   // Sprawdź lokalizację
@@ -74,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkResult    = document.getElementById('checkResult');
   const btnRelocate    = document.getElementById('btnRelocate');
   const btnHistory     = document.getElementById('btnHistory');
+  const btnScanCheck   = document.getElementById('btnScanCheck');
 
   // Zmień lokalizację
   const btnFetchForChange = document.getElementById('btnFetchForChange');
@@ -82,6 +87,72 @@ document.addEventListener('DOMContentLoaded', () => {
   const changeScanNew     = document.getElementById('changeScanNew');
   const inputNewLocation  = document.getElementById('inputNewLocation');
   const btnSubmitChange   = document.getElementById('btnSubmitChange');
+  const btnScanChange     = document.getElementById('btnScanChange');
+
+  // Dodawanie produktu
+  const inputProductName     = document.getElementById('inputProductName');
+  const inputProductSymbol   = document.getElementById('inputProductSymbol');
+  const inputProductBarcode  = document.getElementById('inputProductBarcode');
+  const inputProductLocation = document.getElementById('inputProductLocation');
+  const btnScanAddBarcode    = document.getElementById('btnScanAddBarcode');
+  const btnSaveProduct       = document.getElementById('btnSaveProduct');
+  const addProductResult     = document.getElementById('addProductResult');
+
+  // Skaner kamery
+  const scannerBox    = document.getElementById('scannerBox');
+  const btnStopScanner = document.getElementById('btnStopScanner');
+
+  // --- SKANER KAMERY ---
+  async function startScanner(targetInput, afterScan) {
+    if (!window.Html5Qrcode) {
+      alert('Biblioteka skanera nie została załadowana. Sprawdź połączenie z internetem.');
+      return;
+    }
+
+    scannerTarget = { input: targetInput, afterScan };
+    scannerBox.classList.remove('hidden');
+
+    if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
+
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 150 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.QR_CODE
+          ]
+        },
+        async decodedText => {
+          if (scannerTarget && scannerTarget.input) scannerTarget.input.value = decodedText;
+          await stopScanner();
+          if (scannerTarget && typeof scannerTarget.afterScan === 'function') scannerTarget.afterScan(decodedText);
+        },
+        () => {}
+      );
+    } catch (err) {
+      scannerBox.classList.add('hidden');
+      alert('Nie udało się uruchomić kamery. Sprawdź uprawnienia przeglądarki oraz czy aplikacja działa przez HTTPS.');
+      console.error(err);
+    }
+  }
+
+  async function stopScanner() {
+    if (html5QrCode && html5QrCode.isScanning) {
+      await html5QrCode.stop();
+      await html5QrCode.clear();
+    }
+    scannerBox.classList.add('hidden');
+  }
+
+  if (btnStopScanner) btnStopScanner.onclick = stopScanner;
 
   // --- USTAWIENIA ---
   if (btnSettings && btnBackFromSettings && btnUnlock && btnSaveSettings) {
@@ -144,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
       inputCheckCode.focus();
     };
   }
+
   if (btnChangeLocation) {
     btnChangeLocation.onclick = () => {
       currentMode = 'change';
@@ -154,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastLocation = '';
       const infoEl = document.getElementById('productInfo'); if (infoEl) infoEl.remove();
       inputChangeCode.parentElement.classList.remove('hidden');
+      if (btnScanChange) btnScanChange.classList.remove('hidden');
       btnFetchForChange.classList.remove('hidden');
       changeScanNew.classList.add('hidden');
       inputChangeCode.value = '';
@@ -161,21 +234,40 @@ document.addEventListener('DOMContentLoaded', () => {
       inputChangeCode.focus();
     };
   }
+
+  if (btnAddProduct) {
+    btnAddProduct.onclick = () => {
+      showView('view-add-product');
+      inputProductName.value = '';
+      inputProductSymbol.value = '';
+      inputProductBarcode.value = '';
+      inputProductLocation.value = '';
+      addProductResult.textContent = '';
+      inputProductName.focus();
+    };
+  }
+
   if (btnSwitchUser) btnSwitchUser.onclick = () => showView('view-user');
+
+  // --- SKANOWANIE KAMERĄ ---
+  if (btnScanCheck) btnScanCheck.onclick = () => startScanner(inputCheckCode, () => btnCheckCode.click());
+  if (btnScanChange) btnScanChange.onclick = () => startScanner(inputChangeCode, () => btnFetchForChange.click());
+  if (btnScanAddBarcode) btnScanAddBarcode.onclick = () => startScanner(inputProductBarcode, () => inputProductLocation.focus());
 
   // --- SPRAWDŹ LOKACJĘ + PRZEŁÓŻ ---
   const btnBackCheck = document.querySelector('#view-check .btnBack');
   if (btnBackCheck) btnBackCheck.onclick = () => showView('view-dashboard');
+
   if (btnCheckCode) {
     btnCheckCode.onclick = async () => {
-      const res = await jsonpCall({ action:'checkLocation', deviceId:localStorage.deviceId, token1:localStorage.token1, token2:localStorage.token2, code:inputCheckCode.value });
+      const res = await jsonpCall({ action:'checkLocation', deviceId:localStorage.deviceId, token1:localStorage.token1, token2:localStorage.token2, code:inputCheckCode.value.trim() });
       if (!res.success) return alert(res.error);
       if (res.found) {
         currentCode = res.code;
         currentSymbol = res.symbol;
         lastHistory = res.history || [];
         lastLocation = res.location;
-        checkResult.textContent = `Kod: ${res.code} | Symbol: ${res.symbol} | Lokalizacja: ${res.location}`;
+        checkResult.textContent = `Kod: ${res.code} | Symbol: ${res.symbol} | Lokalizacja: ${res.location || 'brak'}`;
         btnRelocate.classList.remove('hidden');
         if (btnHistory) btnHistory.classList.remove('hidden');
       } else {
@@ -185,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inputCheckCode.onkeydown = e => { if (e.key==='Enter') { e.preventDefault(); btnCheckCode.click(); }};
     if (btnHistory) btnHistory.onclick = () => {
       if (!lastHistory.length) return alert('Brak historii');
-      const lines = lastHistory.map(h => `${new Date(h.date).toLocaleString()}: ${h.oldLocation} → ${h.newLocation}`);
+      const lines = lastHistory.map(h => `${new Date(h.date).toLocaleString()}: ${h.oldLocation} → ${h.newLocation} (${h.user || 'brak usera'})`);
       alert('Historia zmian:' + '\n' + lines.join('\n'));
     };
     if (btnRelocate) btnRelocate.onclick = () => {
@@ -193,9 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMode('Zmień lokalizację');
       showView('view-change');
       inputChangeCode.parentElement.classList.add('hidden');
+      if (btnScanChange) btnScanChange.classList.add('hidden');
       btnFetchForChange.classList.add('hidden');
       changeScanNew.classList.remove('hidden');
-      currentLoc.textContent = `Aktualna lokalizacja: ${lastLocation}`;
+      currentLoc.textContent = `Aktualna lokalizacja: ${lastLocation || 'brak'}`;
       let infoEl = document.getElementById('productInfo');
       if (!infoEl) {
         infoEl = document.createElement('p');
@@ -211,15 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- ZMIEŃ LOKALIZACJĘ (menu) ---
   if (btnFetchForChange) {
     btnFetchForChange.onclick = async () => {
-      const res = await jsonpCall({ action:'checkLocation', deviceId:localStorage.deviceId, token1:localStorage.token1, token2:localStorage.token2, code:inputChangeCode.value });
+      const res = await jsonpCall({ action:'checkLocation', deviceId:localStorage.deviceId, token1:localStorage.token1, token2:localStorage.token2, code:inputChangeCode.value.trim() });
       if (!res.success) return alert(res.error);
       if (!res.found) return alert('Kod nie istnieje');
       currentCode = res.code;
       currentSymbol = res.symbol;
       lastHistory = res.history || [];
       lastLocation = res.location;
-      currentLoc.textContent = `Aktualna lokalizacja: ${res.location}`;
+      currentLoc.textContent = `Aktualna lokalizacja: ${res.location || 'brak'}`;
       inputChangeCode.parentElement.classList.add('hidden');
+      if (btnScanChange) btnScanChange.classList.add('hidden');
       btnFetchForChange.classList.add('hidden');
       changeScanNew.classList.remove('hidden');
       inputNewLocation.value = '';
@@ -231,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- ZAPISZ NOWĄ LOKALIZACJĘ ---
   if (btnSubmitChange) {
     btnSubmitChange.onclick = async () => {
-      const newLoc = inputNewLocation.value;
+      const newLoc = inputNewLocation.value.trim();
       if (!currentCode || !newLoc) return alert('Brak kodu lub nowej lokalizacji');
       const res = await jsonpCall({ action:'setLocation', deviceId:localStorage.deviceId, token1:localStorage.token1, token2:localStorage.token2, code:currentCode, newLocation:newLoc });
       if (!res.success) return alert(res.error);
@@ -251,6 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMode('Zmień lokalizację');
         showView('view-change');
         inputChangeCode.parentElement.classList.remove('hidden');
+        if (btnScanChange) btnScanChange.classList.remove('hidden');
         btnFetchForChange.classList.remove('hidden');
         changeScanNew.classList.add('hidden');
         inputChangeCode.value = '';
@@ -260,9 +355,49 @@ document.addEventListener('DOMContentLoaded', () => {
     inputNewLocation.onkeydown = e => { if (e.key==='Enter') { e.preventDefault(); btnSubmitChange.click(); }};
   }
 
-  // --- POWRÓT Z view-change ---
+  // --- DODAJ PRODUKT ---
+  if (btnSaveProduct) {
+    btnSaveProduct.onclick = async () => {
+      const name = inputProductName.value.trim();
+      const symbol = inputProductSymbol.value.trim();
+      const barcode = inputProductBarcode.value.trim();
+      const location = inputProductLocation.value.trim();
+
+      if (!name || !symbol || !barcode) {
+        return alert('Uzupełnij nazwę, symbol i kod kreskowy. Lokalizacja jest opcjonalna.');
+      }
+
+      const res = await jsonpCall({
+        action:'addProduct',
+        deviceId:localStorage.deviceId,
+        token1:localStorage.token1,
+        token2:localStorage.token2,
+        name,
+        symbol,
+        barcode,
+        location
+      });
+
+      if (!res.success) return alert(res.error);
+      addProductResult.textContent = `Dodano produkt ID: ${res.id} | ${res.symbol} | ${res.barcode}`;
+      inputProductName.value = '';
+      inputProductSymbol.value = '';
+      inputProductBarcode.value = '';
+      inputProductLocation.value = '';
+      inputProductName.focus();
+    };
+
+    [inputProductName, inputProductSymbol, inputProductBarcode, inputProductLocation].forEach(input => {
+      input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); btnSaveProduct.click(); }};
+    });
+  }
+
+  // --- POWROTY ---
   const btnBackChange = document.querySelector('#view-change .btnBack');
   if (btnBackChange) btnBackChange.onclick = () => showView('view-dashboard');
+
+  const btnBackAddProduct = document.querySelector('#view-add-product .btnBack');
+  if (btnBackAddProduct) btnBackAddProduct.onclick = () => showView('view-dashboard');
 
   // --- START ---
   showView('view-home');

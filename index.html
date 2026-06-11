@@ -8,10 +8,13 @@
   <style>
     body { font-family: sans-serif; margin: 1rem; }
     .hidden { display: none; }
-    button, input { display:block; width:100%; padding:.5rem; margin:.5rem 0; }
+    button, input { display:block; width:100%; padding:.5rem; margin:.5rem 0; box-sizing:border-box; }
     ul { list-style:none; padding:0; }
     li { padding:.5rem; border:1px solid #ccc; margin:.25rem 0; cursor:pointer; }
     li:hover { background:#f0f0f0; }
+    #scannerBox { border:1px solid #ccc; padding:.5rem; margin:.75rem 0; }
+    #reader { width:100%; max-width:420px; margin:auto; }
+    .hint { font-size:.9rem; color:#555; }
   </style>
 </head>
 <body>
@@ -45,14 +48,16 @@
     <p>Zalogowany: <strong><span id="labelUser"></span></strong></p>
     <button id="btnCheckLocation">Sprawdź lokalizację</button>
     <button id="btnChangeLocation">Zmień lokalizację</button>
+    <button id="btnAddProduct">Dodaj produkt</button>
     <button id="btnSwitchUser">Zmień użytkownika</button>
   </div>
 
   <!-- 5) Check location -->
   <div id="view-check" class="hidden">
-    <p><strong>Sprawdzanie lokacji</strong> </p>
+    <p><strong>Sprawdzanie lokacji</strong></p>
     <button class="btnBack">← Wstecz</button>
-    <label>Kod towaru: <input id="inputCheckCode" autofocus></label>
+    <label>Kod towaru / symbol: <input id="inputCheckCode" autofocus></label>
+    <button id="btnScanCheck" type="button">Skanuj kamerą</button>
     <button id="btnCheckCode">Sprawdź</button>
     <div id="checkResult"></div>
     <button id="btnRelocate" class="hidden">Przełóż</button>
@@ -60,11 +65,11 @@
   </div>
 
   <!-- 6) Change location -->
-  
   <div id="view-change" class="hidden">
     <p><strong>Zmiana lokacji</strong></p>
     <button class="btnBack">← Wstecz</button>
-    <label>Kod towaru: <input id="inputChangeCode" autofocus></label>
+    <label>Kod towaru / symbol: <input id="inputChangeCode" autofocus></label>
+    <button id="btnScanChange" type="button">Skanuj kamerą</button>
     <button id="btnFetchForChange">Dalej</button>
 
     <div id="changePrompt" class="hidden">
@@ -78,6 +83,28 @@
     </div>
   </div>
 
+  <!-- 7) Add product -->
+  <div id="view-add-product" class="hidden">
+    <p><strong>Dodawanie produktu</strong></p>
+    <button class="btnBack">← Wstecz</button>
+    <label>Nazwa: <input id="inputProductName"></label>
+    <label>Symbol: <input id="inputProductSymbol"></label>
+    <label>Kod kreskowy: <input id="inputProductBarcode"></label>
+    <button id="btnScanAddBarcode" type="button">Skanuj kod kamerą</button>
+    <label>Lokalizacja (opcjonalnie): <input id="inputProductLocation"></label>
+    <button id="btnSaveProduct">Dodaj produkt</button>
+    <div id="addProductResult"></div>
+  </div>
+
+  <!-- Wspólny widok skanera kamery -->
+  <div id="scannerBox" class="hidden">
+    <p><strong>Skaner kamery</strong></p>
+    <p class="hint">Skieruj kamerę na kod EAN/Code128/QR. Kamera działa na HTTPS, np. przez GitHub Pages.</p>
+    <div id="reader"></div>
+    <button id="btnStopScanner" type="button">Zamknij skaner</button>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="main.js"></script>
 </body>
 </html>

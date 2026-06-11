@@ -45,6 +45,9 @@ function doGet(e) {
       case 'setLocation':
         result = setLocation_(deviceId, key, newLoc);
         break;
+      case 'addProduct':
+        result = addProduct_(p.name, p.symbol, p.barcode, p.location);
+        break;
       default:
         result = { success:false, error:"Nieznana akcja: " + action };
     }
@@ -168,4 +171,65 @@ function setLocation_(deviceId, searchKey, newLocation) {
   var histSheet = ss.getSheetByName("HistoriaZmian");
   histSheet.appendRow([new Date(), symbol, code, oldLoc, newLocation, activeUser]);
   return { success:true, message:"Lokalizacja zaktualizowana.", code:code, symbol:symbol, oldLocation:oldLoc, newLocation:newLocation };
+}
+
+
+/**
+ * Dodanie nowego produktu do arkusza Magazyn.
+ *
+ * Struktura arkusza Magazyn:
+ * A: id
+ * B: Nazwa
+ * C: Symbol
+ * D: KodKreskowy
+ * E: Lokalizacja
+ *
+ * ID jest generowane automatycznie na podstawie największego istniejącego ID.
+ * Lokalizacja jest opcjonalna i może zostać zapisana jako pusta komórka.
+ */
+function addProduct_(name, symbol, barcode, location) {
+  name = (name || '').toString().trim();
+  symbol = (symbol || '').toString().trim();
+  barcode = (barcode || '').toString().trim();
+  location = (location || '').toString().trim();
+
+  if (!name || !symbol || !barcode) {
+    return { success:false, error:"Uzupełnij nazwę, symbol i kod kreskowy. Lokalizacja jest opcjonalna." };
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Magazyn");
+  if (!sheet) return { success:false, error:"Brak arkusza Magazyn!" };
+
+  var rows = sheet.getDataRange().getValues();
+  var maxId = 1000;
+
+  for (var i = 1; i < rows.length; i++) {
+    var rowId = Number(rows[i][0]);
+    var rowSymbol = rows[i][2] ? rows[i][2].toString().trim() : '';
+    var rowBarcode = rows[i][3] ? rows[i][3].toString().trim() : '';
+
+    if (!isNaN(rowId) && rowId > maxId) maxId = rowId;
+
+    if (rowSymbol === symbol) {
+      return { success:false, error:"Produkt o takim symbolu już istnieje: " + symbol };
+    }
+
+    if (rowBarcode === barcode) {
+      return { success:false, error:"Produkt o takim kodzie kreskowym już istnieje: " + barcode };
+    }
+  }
+
+  var newId = maxId + 1;
+  sheet.appendRow([newId, name, symbol, barcode, location]);
+
+  return {
+    success:true,
+    message:"Produkt dodany do bazy.",
+    id:newId,
+    name:name,
+    symbol:symbol,
+    barcode:barcode,
+    location:location
+  };
 }

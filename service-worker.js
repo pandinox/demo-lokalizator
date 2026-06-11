@@ -1,4 +1,4 @@
-const CACHE_NAME = 'magazyn-cache-v1';
+const CACHE_NAME = 'magazyn-cache-v2';
 const ASSETS = [
   './',
   './index.html',
