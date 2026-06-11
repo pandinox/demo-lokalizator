@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputNewLocation  = document.getElementById('inputNewLocation');
   const btnSubmitChange   = document.getElementById('btnSubmitChange');
   const btnScanChange     = document.getElementById('btnScanChange');
+  const btnScanNewLocation = document.getElementById('btnScanNewLocation');
 
   // Dodawanie produktu
   const inputProductName     = document.getElementById('inputProductName');
@@ -95,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputProductBarcode  = document.getElementById('inputProductBarcode');
   const inputProductLocation = document.getElementById('inputProductLocation');
   const btnScanAddBarcode    = document.getElementById('btnScanAddBarcode');
+  const btnScanProductLocation = document.getElementById('btnScanProductLocation');
   const btnSaveProduct       = document.getElementById('btnSaveProduct');
   const addProductResult     = document.getElementById('addProductResult');
 
@@ -252,7 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- SKANOWANIE KAMERĄ ---
   if (btnScanCheck) btnScanCheck.onclick = () => startScanner(inputCheckCode, () => btnCheckCode.click());
   if (btnScanChange) btnScanChange.onclick = () => startScanner(inputChangeCode, () => btnFetchForChange.click());
+  if (btnScanNewLocation) btnScanNewLocation.onclick = () => startScanner(inputNewLocation, () => btnSubmitChange.click());
   if (btnScanAddBarcode) btnScanAddBarcode.onclick = () => startScanner(inputProductBarcode, () => inputProductLocation.focus());
+  if (btnScanProductLocation) btnScanProductLocation.onclick = () => startScanner(inputProductLocation, () => btnSaveProduct.focus());
 
   // --- SPRAWDŹ LOKACJĘ + PRZEŁÓŻ ---
   const btnBackCheck = document.querySelector('#view-check .btnBack');

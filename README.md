@@ -14,7 +14,9 @@ W wersji **v2.0** dodano:
 - skanowanie kodów EAN/UPC/Code128/Code39 oraz QR,
 - dodawanie nowych produktów do bazy z poziomu aplikacji,
 - automatyczne generowanie kolejnego ID produktu na podstawie arkusza `Magazyn`,
-- możliwość dodania produktu bez uzupełniania lokalizacji.
+- możliwość dodania produktu bez uzupełniania lokalizacji,
+- skanowanie kodu lokalizacji kamerą przy zmianie lokalizacji,
+- skanowanie lokalizacji kamerą podczas dodawania produktu.
 
 ---
 
@@ -37,6 +39,16 @@ W wersji **v2.0** dodano:
 * odczyt bieżącej lokalizacji produktu,
 * przypisanie nowej lokalizacji,
 * automatyczny zapis historii zmian.
+
+
+## Skanowanie lokalizacji
+
+Aplikacja umożliwia skanowanie kodów lokalizacji za pomocą aparatu. Dzięki temu lokalizację można wprowadzić bez ręcznego przepisywania oznaczenia z regału, półki lub etykiety magazynowej.
+
+Skanowanie lokalizacji jest dostępne w dwóch miejscach:
+
+- podczas zmiany lokalizacji istniejącego produktu,
+- podczas dodawania nowego produktu do bazy.
 
 ## Historia zmian
 
@@ -66,12 +78,14 @@ Dla każdej zmiany zapisywane są informacje:
 
 * obsługa kamery telefonu lub komputera,
 * skanowanie kodów kreskowych EAN, UPC, Code128, Code39 oraz QR,
-* możliwość wykorzystania skanera kamery przy sprawdzaniu lokalizacji, zmianie lokalizacji oraz dodawaniu produktu.
+* możliwość wykorzystania skanera kamery przy sprawdzaniu produktu, zmianie lokalizacji, skanowaniu nowej lokalizacji oraz dodawaniu produktu.
 
 ## Dodawanie produktów
 
 * dodawanie produktu z poziomu aplikacji,
 * pola: nazwa, symbol, kod kreskowy i lokalizacja,
+* kod kreskowy produktu można zeskanować kamerą,
+* lokalizację produktu można wpisać ręcznie albo zeskanować kamerą,
 * lokalizacja jest opcjonalna,
 * ID produktu generowane jest automatycznie po stronie Google Apps Script.
 
@@ -384,6 +398,8 @@ W formularzu należy uzupełnić:
 * lokalizację — opcjonalnie.
 
 Kod kreskowy można wpisać ręcznie, wkleić z komputera albo zeskanować kamerą.
+
+Lokalizację można wpisać ręcznie albo zeskanować aparatem, jeśli lokalizacje magazynowe są oznaczone kodami kreskowymi lub QR.
 
 Po zapisaniu Google Apps Script automatycznie:
 
