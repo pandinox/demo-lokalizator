@@ -1,7 +1,7 @@
 /* main.js */
 
 // URL do JSONP-enabled Web App (Apps Script)
-const SCRIPT_URL = 'url script exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVTxpbFwaQeX8rFMBrXU_jSIqDA8t6JTjbER2HHKLhOjp9dFoUe6J-LlOAz4p40-iH/exec';
 
 // JSONP helper
 function jsonpCall(params) {
